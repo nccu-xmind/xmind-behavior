@@ -1,17 +1,10 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+require_once '../inc/setup.inc.php';
 
 //確保在連接客戶端時不會超時   
 set_time_limit(0);
 
-//設定 IP 和 連接埠號   
-$address = '127.0.0.1';
-$port = 5566;
 //創建一個 SOCKET
 if (($sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) < 0) {
     echo "socket_create() failed: " . socket_strerror($sock) . PHP_EOL;
@@ -45,11 +38,31 @@ do {
     }
 
     //發到客戶端   
-    $msg = "<font color=red>Welcome To Server!</font><br>";
+    $msg = "Welcome To Xmind Server!" . PHP_EOL;
     socket_write($msgsock, $msg, strlen($msg));
-    socket_close($msgsock);
+    
 
     echo "The Server is running……" . PHP_EOL;
+    do {
+        if (false === ($buf = socket_read($msgsock, 2048, PHP_NORMAL_READ))) {
+            echo "socket_read() failed: reason: " . socket_strerror(socket_last_error($msgsock)) . "\n";
+            break 2;
+        }
+        if (!$buf = trim($buf)) {
+            continue;
+        }
+        if ($buf == 'quit') {
+            break;
+        }
+        if ($buf == 'shutdown') {
+            socket_close($msgsock);
+            break 2;
+        }
+        $talkback = "PHP: You said '$buf'.\n";
+        socket_write($msgsock, $talkback, strlen($talkback));
+        echo "$buf\n";
+    } while (true);
+    socket_close($msgsock);
 } while (true);
 
 socket_close($sock);
